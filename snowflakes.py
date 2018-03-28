@@ -1,13 +1,34 @@
 import cng as cng
 import random as rdn
 import time
-
+from lib_bresenham import *
 
 #classes definition
 class Point:
     def __init__(self,x,y):
         self.x = x
         self.y = y
+        self.identifier = 0
+
+    # Fonction qui permet de calculer les nouvelles coordonnées du point projeté dans la viewport
+    def compute_values(self):
+        global viewport_x
+        global viewport_y
+        computed_x = (self.x * (viewport_width/window_width) + self.y*0 + 1 * (viewport_x * window_width - window_x * viewport_width)/window_width)
+        computed_y = (self.x * 0 + self.y * (viewport_height/window_height) + 1 * (viewport_y - (viewport_height * window_y)/viewport_height))
+        return (computed_x, computed_y)
+
+    # Fonction qui permet de dessiner un point à l'écran
+    def draw(self):
+        (computed_x, computed_y) = self.compute_values()
+        #print(computed_x, computed_y)
+        self.id = cng.circle(computed_x, computed_y, 1)
+
+    # Fonction qui permet de bouger un point (appelle la fonction de recalcul de ses coordonnées)
+    def move(self):
+        (point_x, point_y) = cng.obj_get_position(self.id)
+        (computed_x, computed_y) = self.compute_values()
+        cng.obj_move(self.id, computed_x - point_x, computed_y - point_y)
 
 class Window:
     def __init__(self, x_origin, y_origin, width, height):
@@ -16,7 +37,8 @@ class Window:
         self.width = width
         self.height = height
 
-array_points = [ Point(500,500), Point(500,1000), Point(500,800), Point(300,1000), Point(500,800), Point(700,1000) ]
+#Variables globales
+array_points_snowflake = [ Point(50,50), Point(50,100), Point(50,80), Point(30,100), Point(50,80), Point(70,100) ]
 positionXRectangle=None
 positionYRectangle=None
 rectangleID=None
@@ -24,109 +46,39 @@ point=None
 viewport=None
 window=None
 draw_point=None
+global viewport_x
+global viewport_y
 
-def initWindow():
-    global step, pointA, pointB, point, viewport, window
+window_width, window_height = 1280, 720
+window_x, window_y = 0, 0
+viewport_width, viewport_height = 1000, 600
+viewport_x, viewport_y = 200, 20
 
-    temp = None
-    cng.init_window("pgl : Snowflakes", color='white')
-    step = 0.5
-
-    point = Point(3,1)
-    viewport = Window(480, 240, 1500, 1000)
-    window = Window(-2,-1,6,5)
-
-    rdn.seed(time.time())
-    debut = time.time();
-    #for x in range(0, 10000):
-    #    pointA = Point(rdn.randint(0, 600),rdn.randint(0, 600))
-    #    pointB = Point(rdn.randint(0, 800),rdn.randint(0, 800))
-    #    bresenham(pointA, pointB)
-
-        #bresenham(pt.x, pt.y)
-    fin = time.time()
-    print("With bresenham : ", fin - debut)
-
-    rdn.seed(0)
-    #y = pointA.x
-    #debut = time.time();
-    #for x in range(0, 10000):
-    #    for x in range(pointA.x, pointB.x):
-    #       drawPoint(x, y)
-    #       x+=step
-    #       y+=step
-    #fin = time.time()
-
-def bresenham(pointA, pointB):
-    dx = pointB.x - pointA.x
-    dy mvn -B archetype:generate \
-   -DarchetypeGroupId=fr.univtln.bruno.archetype \
-   -DarchetypeArtifactId=javaSimpleArchetype \
-   -DarchetypeVersion=0.1.0-develop-6 \
-   -DgroupId=fr.univtln.bruno.test \
-   -DartifactId=monprojet \
-   -Dversion=1.0-SNAPSHOT \
-   -DprojectShortName=monprojet \
-   -DgithubAccount=emmanuelbruno \
-   -DUtlnEmail=emmanuel.bruno@univ-tln.fr= pointB.y - pointA.y
-    x = pointA.x
-    y = pointA.y
-    signY = 1
-    signX = 1
-
-    if(dy < 0):
-        signY = -1
-    if(dx < 0):
-        signX = -1
-    if(abs(dx) > abs(dy)):
-        dec = abs(dx) - 2*abs(dy)
-        print("dx : ", dx, "dy : ", dy, "dec : ", dec)
-
-        print("x : ", x, " y : ", y)
-        while(int(x) != int(pointB.x)):
-            print(int(x), int(pointB.x))
-            drawPoint(x,y)
-            if(dec < 0):
-                dec = dec + 2*abs(dx)
-                y = y + signY
-            dec = dec - 2*abs(dy)
-            x = x + signX
-    else :
-        dec = abs(dy) - 2*abs(dx)
-        while(int(y) != int(pointB.y)):
-            print(int(y), int(pointB.y))
-            drawPoint(x,y)
-            if(dec < 0):
-                dec = dec + 2*abs(dy)
-                x = x + signX
-            dec = dec - 2 * abs(dx)
-            y = y + signY
+points = []
 
 def drawSnowflake():
-    bresenham(array_points[0], array_points[1])
-    bresenham(array_points[3], array_points[2])
-    bresenham(array_points[4], array_points[5])
+    bresenham(array_points_snowflake[0], array_points_snowflake[1])
+    bresenham(array_points_snowflake[3], array_points_snowflake[2])
+    bresenham(array_points_snowflake[4], array_points_snowflake[5])
 
-def drawRectangle():
-    #draw a rectangle
-    #screen specifications
-    screen_width = cng.get_screen_width()
-    screen_height = cng.get_screen_height()
-    print('Width : ', screen_width, ' Height : ', screen_height)
-    positionXRectangle=(screen_width/4)
-    positionYRectangle=(screen_height/4)
-    return cng.rectangle(viewport.x_origin,viewport.y_origin,viewport.width,viewport.height, 2)
+# Fonction pour projeter un point
+def projection_point(x2 , y2):
+    point = Point(x2, y2)
+    points.append(point)
+    point.draw()
 
-
-def drawPoint(x,y):
-    global draw_point
-    draw_point = cng.circle(x, y, 1,1)
+# Fonction pour projeter un ensemble de points
+def projection_points(points):
+    for point in points:
+        projection_point(point.x, point.y)
 
 def main():
-    #last instruction in program
-    cng.main_loop()
+    cng.init_window('Snowflakes', window_width, window_height)
+    viewport = cng.rectangle(viewport_x, viewport_y, viewport_x + viewport_width, viewport_y + viewport_height)
+    pass
 
-initWindow()
-rectangleID = drawRectangle()
-drawSnowflake()
-main()
+if __name__ == "__main__":
+    main()
+    drawSnowflake()
+    projection_points(array_points_snowflake)
+    cng.main_loop()
