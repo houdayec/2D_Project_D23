@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import cng as cng
 import random as rdn
 import time
